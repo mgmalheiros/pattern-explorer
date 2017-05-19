@@ -1,0 +1,25 @@
+// african wild dog-like spots
+
+define chemical P limit 3
+
+// -------- prepattern
+
+use seed 5
+
+use chemical P conc 0.5 dev 0.5 diff 0.01
+
+create sqr_grid 100 100
+
+// -------- rules
+
+rule from 100 if P conc > 0.5 change P conc +0.01
+rule from 100 if P conc < 0.5 change P conc -0.04
+
+colormap select gradient
+colormap slot 00 use color "orange"
+colormap slot 40 use color "black"
+colormap slot 60 use color "black"
+colormap slot 99 use color "white"
+
+stop at 2000
+

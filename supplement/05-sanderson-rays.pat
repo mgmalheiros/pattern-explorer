@@ -1,0 +1,31 @@
+define chemical V anisotropic
+define chemical U
+define chemical P
+define chemical G
+
+// -------- prepattern
+
+use chemical V conc 4 dev 1 diff 0.00625
+use chemical U conc 4 dev 1 diff 0.024
+use chemical P conc 0       diff 0
+use chemical G conc 0       diff 0.05
+
+create hex_grid 100 100
+
+set cell 5050 chemical P conc 1
+
+// -------- rules
+
+rule if P conc == 1 change G conc  4
+rule if P conc == 0 change G conc -0.001
+
+rule always polarize G conc
+
+rule always react U V scale 0.004 turing alpha 16 beta 12
+
+colormap select gradient
+colormap slot 0  use color "white"
+colormap slot 99 use color "420009"
+
+stop at 10000
+
