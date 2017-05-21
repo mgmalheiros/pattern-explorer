@@ -1,7 +1,7 @@
 # pattern-explorer
 Reference implementation and experiments for the model described on the paper *Pattern formation through minimalist biologically inspired cellular simulation*, presented at the Graphics Interface 2017 conference.
 
-There is a simple Makefile, that needs to be updated before compiling. It has been only tested on Linux, but should be fairly simple to port to Mac OS or Windows.
+There is a simple Makefile, that needs to be updated before compiling.
 
 There are three executables:
 
@@ -19,19 +19,20 @@ Dependencies:
 
 Key bindings for GUI program:
 
-  * [space] run a single iteration
-  * [tab] run at most 50 iterations
-  * [esc] quit
-  * [A] change shown chemical
-  * [B] show/hide information bar
-  * [C] center pattern in view
-  * [D] show/hide domain limits
-  * [L] reload colormap definitions
-  * [M] change colormap type
-  * [N] show/hide nearest neighbors for current cell (picked a right-click)
-  * [O] output a screenshot
-  * [P] show/hide polarity vectors
-  * [S] start/stop simulation
-  * [T] outupt high-quality interpolated texture
-  * [X] change cell exhibition type
+  * **space** - run a single iteration
+  * **tab** - run at most 50 iterations
+  * **esc** - quit
+  * **A** - change shown chemical
+  * **B** - show/hide information bar
+  * **C** - center pattern in view
+  * **D** - show/hide domain limits
+  * **L** - reload colormap definitions
+  * **M** - change colormap type
+  * **N** - show/hide nearest neighbors for current cell (picked a right-click)
+  * **O** - output a screenshot
+  * **P** - show/hide polarity vectors
+  * **S** - start/stop simulation
+  * **T** - outupt high-quality interpolated texture
+  * **X** - change cell exhibition type
 
+It has been only tested on Linux, but should be fairly simple to port to Mac OS or Windows.
