@@ -25,11 +25,11 @@ NNS_SpatialSorting::NNS_SpatialSorting(int m)
 	case 48:
 	case 80:
 	case 120:
-		n_size = int(sqrtf(m + 1)) / 2;
-		//std::cout << "neighborhood m=" << m << ", n_size=" << n_size << "\n";
+		n_size = int(sqrtf((float) m + 1)) / 2;
+		//std::cout << "nns: neighborhood m=" << m << ", n_size=" << n_size << '\n';
 		break;
 	default:
-		std::cerr << "warning: invalid neighborhood m=" << m << ", m set to 48\n";
+		std::cerr << "nns: invalid neighborhood m=" << m << ", m set to 48\n";
 		n_size = 3;
 	}
 }
@@ -47,12 +47,12 @@ void NNS_SpatialSorting::add_position(float x, float y, CellId id)
 		positions[counter].set(x, y, id);
 		counter++;
 
-		int dim = int(ceilf(sqrtf(counter)));
+		int dim = int(ceilf(sqrtf((float) counter)));
 		if (dim != dim_x) {
 			// NOTE: a full sort should be run by the simulation, not here
 			dim_x = dim_y = dim;
-			//std::cout << "matrix is now " << dim_x << " x " << dim_y << "\n";
-			
+			//std::cout << "nns: matrix is now " << dim_x << " x " << dim_y << '\n';
+
 			row_is_sorted.resize(dim_y);
 			col_is_sorted.resize(dim_x);
 		}

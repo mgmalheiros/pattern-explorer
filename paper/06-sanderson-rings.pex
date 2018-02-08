@@ -1,3 +1,5 @@
+// rings
+
 define chemical V
 define chemical U anisotropic
 define chemical P
@@ -28,4 +30,3 @@ colormap slot 40 use color "0ee1da"
 colormap slot 80 use color "80763e"
 
 stop at 18000
-

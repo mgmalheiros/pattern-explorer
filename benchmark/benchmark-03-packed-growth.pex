@@ -1,0 +1,26 @@
+// packed growth test configuration 
+
+define division_limit 6
+define domain packed
+
+define chemical V
+define chemical U
+
+// -------- prepattern
+
+use seed 1
+
+use chemical U conc 4 dev 2 diff 0.08
+use chemical V conc 4 dev 2 diff 0.01
+
+create hex_grid 39 45
+
+// -------- rules
+
+rule always react U V scale 0.01 turing alpha 16 beta 12
+
+rule from 0 until 13000 probability 0.0001 divide direction 0 dev 180
+
+zoom level 1.596
+
+stop at 15000

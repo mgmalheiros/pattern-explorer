@@ -28,7 +28,7 @@ use seed 1
 use chemical U    conc 4 dev 0.0    diff 0.0225 dev 0
 use chemical V    conc 4 dev 0.0    diff 0.001  dev 0
 
-create sqr_grid 30 30 at 35 -35
+create sqr_grid 30 30 at 35 -35 //wrap
 
 rule always react U V scale 0.004 turing alpha 16 beta 12
 

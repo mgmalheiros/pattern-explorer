@@ -1,0 +1,48 @@
+// test different scale parameter
+
+define chemical U
+define chemical V
+define chemical T
+
+//define time_step 0.1
+
+// -------- prepattern
+
+use seed 1
+use chemical U    conc 4 dev 0.5    diff 0.05  dev 0
+use chemical V    conc 4 dev 0.5    diff 0.01  dev 0
+use chemical T    conc 1
+
+create sqr_grid 30 30 at -35 35
+
+use seed 1
+use chemical U    conc 4 dev 0.5    diff 0.05  dev 0
+use chemical V    conc 4 dev 0.5    diff 0.01  dev 0
+use chemical T    conc 2
+
+create sqr_grid 30 30 at 35 35
+
+use seed 1
+use chemical U    conc 4 dev 0.5    diff 0.05  dev 0
+use chemical V    conc 4 dev 0.5    diff 0.01  dev 0
+use chemical T    conc 3
+
+create sqr_grid 30 30 at -35 -35
+
+use seed 1
+use chemical U    conc 4 dev 0.5    diff 0.05  dev 0
+use chemical V    conc 4 dev 0.5    diff 0.01  dev 0
+use chemical T    conc 4
+
+create sqr_grid 30 30 at 35 -35
+
+// -------- rules
+
+rule if T conc == 1 react U V scale 0.005 turing alpha 16 beta 12
+
+rule if T conc == 2 react U V scale 0.01 turing alpha 16 beta 12
+
+rule if T conc == 3 react U V scale 0.02 turing alpha 16 beta 12
+
+rule if T conc == 4 react U V scale 0.04 turing alpha 16 beta 12
+

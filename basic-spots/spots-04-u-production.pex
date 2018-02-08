@@ -18,3 +18,4 @@ rule always react U V scale 0.01 turing alpha 16 beta 12
 
 rule from 2000 if U conc > 0.6 change U conc +0.01
 //rule from 2000 if U conc > 0.7 change U conc +0.01
+

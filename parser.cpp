@@ -30,17 +30,6 @@ static std::string trim(std::string str)
     return str.substr(first, last - first + 1);
 }
 
-//static void warning(std::string message, int line_num = 0)
-//{
-//	std::cerr << "warning: " + message;
-//	if (line_num) {
-//		std::cerr << " in line " << line_num << '\n';
-//	}
-//	else {
-//		std::cerr << '\n';
-//	}
-//}
-
 static void error(std::string message, int line_num = 0)
 {
 	std::cerr << "error: " + message;
@@ -50,14 +39,13 @@ static void error(std::string message, int line_num = 0)
 	else {
 		std::cerr << '\n';
 	}
-	exit(1);
+	PAUSE_AND_EXIT;
 }
 
 static int find_chemical(std::string name)
 {
 	for (int ch = 0; ch < simulation.n_chemicals; ch++) {
 		if (simulation.chemicals[ch].name == name) {
-			//std::cout << "find chemical: " << name << " is index " << i << '\n';
 			return ch;
 		}
 	}
@@ -72,12 +60,10 @@ static int add_mapping(std::string name, int line_num)
 	int i;
 	for (i = 0; i < (int) simulation.mappings.size(); i++) {
 		if (simulation.mappings[i] == name) {
-			//std::cout << "add mapping: " << name << " is index " << i << '\n';
 			return i;
 		}
 	}
 	simulation.mappings.push_back(name);
-	//std::cout << "add mapping: " << name << " added as index " << i << '\n';
 	return i;
 }
 
@@ -85,7 +71,6 @@ static int find_mapping(std::string name)
 {
 	for (int i = 0; i < (int) simulation.mappings.size(); i++) {
 		if (simulation.mappings[i] == name) {
-			//std::cout << "find mapping: " << name << " is index " << i << '\n';
 			return i;
 		}
 	}
@@ -111,7 +96,7 @@ static void get_parameter(std::stringstream& ss, Parameter& par, float& val, int
 
 	// check for a float
 	char* end;
-	float f = strtod(word.c_str(), &end);
+	float f = (float) strtod(word.c_str(), &end);
 	if (word.c_str() != end) {
 		par = CONSTANT;
 		val = f;
@@ -147,6 +132,12 @@ static void get_parameter(std::stringstream& ss, Parameter& par, float& val, int
 
 static void create_shape(std::string shape, float center_x, float center_y, bool fixed)
 {
+	// in case the experiment is reloaded
+	for (int i = 0; i < 26; i++) {
+		mirror_seq_upper[i].clear();
+		mirror_seq_lower[i].clear();
+	}
+
 	std::ifstream file(shape.c_str());
 	if (! file.is_open()) {
 		error("cannot open shape file '" + shape + "'");
@@ -157,7 +148,7 @@ static void create_shape(std::string shape, float center_x, float center_y, bool
 	std::string line;
 	while (std::getline(file, line)) {
 		if (line.length() > count_x) {
-			count_x = line.length();
+			count_x = (unsigned int) line.length();
 		}
 		count_y++;
 	}
@@ -168,11 +159,11 @@ static void create_shape(std::string shape, float center_x, float center_y, bool
 	file.clear();
     file.seekg(0, file.beg);
 	while (std::getline(file, line)) {
-		float y = center_y + (count_y / 2.0 - cy) * 2;
-		int len = line.length();
+		float y = center_y + (count_y / 2.0F - cy) * 2;
+		int len = (int) line.length();
 		for (int cx = 0; cx < len; cx++) {
 			if (isalpha(line[cx])) {
-	    		float x = center_x + (cx - count_x / 2.0) * 2;
+	    		float x = center_x + (cx - count_x / 2.0F) * 2;
 	    		CellId id = simulation_create_cell(x, y, fixed);
 
 	    		// standard cell
@@ -222,11 +213,10 @@ static void create_shape(std::string shape, float center_x, float center_y, bool
 				mirror_seq_lower[i].pop_back();
 			}
 			simulation_define_mirror_pair(id1, id2);
-			//std::cout << id1 << " -- " << id2 << '\n';
 		}
 		if (mirror_seq_upper[i].size()) {
 			std::cout << "shape: found " << mirror_seq_upper[i].size() << " extra cell(s) for '" << char('A' + i) << "'\n";
-			for(unsigned int j = 0; j < mirror_seq_upper[i].size(); j++) {
+			for (unsigned int j = 0; j < mirror_seq_upper[i].size(); j++) {
 				std::cout << mirror_seq_upper[i][j] << ' ';
 			}
 			std::cout << '\n';
@@ -284,40 +274,34 @@ void parser_load_pattern()
 		    		anisotropic = true;
 		    	}
 		    	simulation_define_chemical(name, limit, anisotropic);
-		    	//std::cout << "chem " << simulation.chemicals[ch] << " has limit=" << simulation.limit[ch]
-		    	//          << ((simulation.anisotropic[ch])? " anisotropic" : " isotropic") << '\n';
 		    }
 		    else if (word == "division_limit") {
 		    	int division_limit;
 		    	ss >> division_limit;
 		    	simulation_define_division_limit(division_limit);
-		    	//std::cout << "division_limit is "<< division_limit << '\n';
 		    }
 		    else if (word == "domain") {
 		    	ss >> word;
 		    	if (word == "packed") {
 		    		simulation.domain_is_packed = true;
 			    	ss >> word;
-			    	if (word == "factor") {
-			    		float factor;
-			    		ss >> factor;
-			    		simulation.domain_packed_factor = factor;
+			    	if (word == "area") {
+			    		float area;
+			    		ss >> area;
+			    		simulation.domain_packed_area = area;
 			    	}
-			    	std::cout << "domain is packed with factor " << simulation.domain_packed_factor << '\n';
 		    	}
 		    	else {
 		    		float width, height;
 		    		std::stringstream(word) >> width;
 		    		ss >> height;
 		    		simulation_define_domain(width, height);
-		    		std::cout << "domain is "<< width << " by " << height << '\n';
 		    	}
 		    }
 		    else if (word == "time_step") {
 		    	float time_step;
 		    	ss >> time_step;
 		    	simulation_define_time_step(time_step);
-		    	//std::cout << "time step is "<< time_step << '\n';
 		    }
 	    	else {
 	    		error("unknown command " + word, n);
@@ -352,8 +336,6 @@ void parser_load_pattern()
 		    		}
 		    		simulation_use_chemical_diffusion(ch, value, deviation);
 		    	}
-		    	//std::cout << "chem " << simulation.chemicals[ch] << " has conc=" << concentration
-		    	//          << " diff=" << diffusion << '\n';
 		    }
 		    else if (word == "polarity") {
 		    	ss >> word;
@@ -361,7 +343,7 @@ void parser_load_pattern()
 		    		simulation_use_polarity(FLT_MAX, 0);
 		    	}
 		    	else {
-		    		float angle = strtod(word.c_str(), NULL);
+		    		float angle = (float) strtod(word.c_str(), NULL);
 		    		float deviation = 0;
 		    		ss >> word;
 		    		if (word == "dev") {
@@ -374,7 +356,6 @@ void parser_load_pattern()
 		    	int seed;
 		    	ss >> seed;
 		    	simulation_use_seed(seed);
-		    	//std::cout << "seed is "<< seed << '\n';
 		    }
 		    else {
 		    	error("unknown command " + word, n);
@@ -393,10 +374,10 @@ void parser_load_pattern()
 					fixed = true;
 				}
 				simulation_create_cell(x, y, fixed);
-		    	//std::cout << "new cell created at " << x << "," << y << '\n';
 		    }
 		    else if (word == "sqr_grid") {
-		    	float count_x = 0, count_y = 0, x = 0, y = 0, dev = 0;
+				int count_x = 0, count_y = 0;
+				float x = 0, y = 0, dev = 0;
 		    	bool fixed = false, wrap = false;
 		    	ss >> count_x;
 		    	ss >> count_y;
@@ -421,10 +402,10 @@ void parser_load_pattern()
 		    		wrap = true;
 		    	}
 		    	simulation_create_square_grid(count_x, count_y, x, y, dev, fixed, wrap);
-		    	//std::cout << "new " << count_x << " by " << count_y << " square grid created at " << x << "," << y << " dev=" << dev << '\n';
 		    }
 		    else if (word == "sqr_circle") {
-		    	float count = 0, x = 0, y = 0, dev = 0;
+				int count = 0;
+				float x = 0, y = 0, dev = 0;
 		    	bool fixed = false;
 		    	ss >> count;
 		    	if (count == 0) {
@@ -444,10 +425,10 @@ void parser_load_pattern()
 		    		fixed = true;
 		    	}
 		    	simulation_create_square_circle(count, x, y, dev, fixed);
-		    	//std::cout << "new square circle with diameter " << count << " created at " << x << "," << y << " dev=" << dev << '\n';
 		    }
 		    else if (word == "hex_grid") {
-		    	float count_x = 0, count_y = 0, x = 0, y = 0, dev = 0;
+				int count_x = 0, count_y = 0;
+				float x = 0, y = 0, dev = 0;
 		    	bool fixed = false;
 		    	ss >> count_x;
 		    	ss >> count_y;
@@ -468,10 +449,10 @@ void parser_load_pattern()
 		    		fixed = true;
 		    	}
 		    	simulation_create_hexagonal_grid(count_x, count_y, x, y, dev, fixed);
-		    	//std::cout << "new " << count_x << " by " << count_y << " hexagonal grid created at " << x << "," << y << " dev=" << dev << '\n';
 		    }
 		    else if (word == "hex_circle") {
-		    	float count = 0, x = 0, y = 0, dev = 0;
+				int count = 0;
+				float x = 0, y = 0, dev = 0;
 		    	bool fixed = false;
 		    	ss >> count;
 		    	if (count == 0) {
@@ -491,7 +472,6 @@ void parser_load_pattern()
 		    		fixed = true;
 		    	}
 		    	simulation_create_hexagonal_circle(count, x, y, dev, fixed);
-		    	//std::cout << "new hexagonal circle with diameter " << count << " created at " << x << "," << y << " dev=" << dev << '\n';
 		    }
 		    else if (word == "shape") {
 		    	float x = 0, y = 0;
@@ -512,7 +492,6 @@ void parser_load_pattern()
 		    		fixed = true;
 		    	}
 		    	create_shape(shape, x, y, fixed);
-		    	//std::cout << "new shape from '" << shape << "' created at " << x << "," << y << " dev=" << dev << '\n';
 		    }
 	    	else {
 	    		error("unknown command " + word, n);
@@ -566,7 +545,7 @@ void parser_load_pattern()
 			    		simulation_set_cell_polarity(id, FLT_MAX, 0);
 			    	}
 			    	else {
-			    		float angle = strtod(word.c_str(), NULL);
+			    		float angle = (float) strtod(word.c_str(), NULL);
 			    		float deviation = 0;
 			    		ss >> word;
 			    		if (word == "dev") {
@@ -639,7 +618,7 @@ void parser_load_pattern()
 			    		}
 			    	}
 			    	else {
-			    		float angle = strtod(word.c_str(), NULL);
+			    		float angle = (float) strtod(word.c_str(), NULL);
 			    		float deviation = 0;
 			    		ss >> word;
 			    		if (word == "dev") {
@@ -680,6 +659,7 @@ void parser_load_pattern()
 		    else if (word == "if") {
 		    	// extract first parameter
 		    	get_parameter(ss, rule.pr_par[0], rule.pr_val[0], n);
+
 		    	// extract comparison operator and other parameter(s)
 		    	ss >> word;
 		    	if (word == "==") {
@@ -746,24 +726,7 @@ void parser_load_pattern()
 		    		rule.ac_par[2] = CONSTANT;
 		    		rule.ac_val[2] = 1;
 		    	}
-		    	if (word == "gray-scott") {
-		    		rule.action = REACT_GS;
-			    	ss >> word;
-				    if (word == "f") {
-				    	get_parameter(ss, rule.ac_par[3], rule.ac_val[3], n);
-				    }
-				    else {
-				    	error("parameter 'f' expected", n);
-				    }
-			    	ss >> word;
-				    if (word == "k") {
-				    	get_parameter(ss, rule.ac_par[4], rule.ac_val[4], n);
-				    }
-				    else {
-				    	error("parameter 'k' expected", n);
-				    }
-		    	}
-		    	else if (word == "turing") {
+		    	if (word == "turing") {
 		    		rule.action = REACT_TU;
 			    	ss >> word;
 				    if (word == "alpha") {
@@ -780,8 +743,98 @@ void parser_load_pattern()
 				    	error("parameter 'beta' expected", n);
 				    }
 		    	}
+		    	else if (word == "gray-scott") {
+		    		rule.action = REACT_GS;
+			    	ss >> word;
+				    if (word == "f") {
+				    	get_parameter(ss, rule.ac_par[3], rule.ac_val[3], n);
+				    }
+				    else {
+				    	error("parameter 'f' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "k") {
+				    	get_parameter(ss, rule.ac_par[4], rule.ac_val[4], n);
+				    }
+				    else {
+				    	error("parameter 'k' expected", n);
+				    }
+		    	}
 		    	else if (word == "linear") {
 		    		rule.action = REACT_LI;
+			    	ss >> word;
+				    if (word == "au") {
+				    	get_parameter(ss, rule.ac_par[3], rule.ac_val[3], n);
+				    }
+				    else {
+				    	error("parameter 'au' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "bu") {
+				    	get_parameter(ss, rule.ac_par[4], rule.ac_val[4], n);
+				    }
+				    else {
+				    	error("parameter 'bu' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "cu") {
+				    	get_parameter(ss, rule.ac_par[5], rule.ac_val[5], n);
+				    }
+				    else {
+				    	error("parameter 'cu' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "du") {
+				    	get_parameter(ss, rule.ac_par[6], rule.ac_val[6], n);
+				    }
+				    else {
+				    	error("parameter 'du' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "mu") {
+				    	get_parameter(ss, rule.ac_par[7], rule.ac_val[7], n);
+				    }
+				    else {
+				    	error("parameter 'mu' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "av") {
+				    	get_parameter(ss, rule.ac_par[8], rule.ac_val[8], n);
+				    }
+				    else {
+				    	error("parameter 'av' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "bv") {
+				    	get_parameter(ss, rule.ac_par[9], rule.ac_val[9], n);
+				    }
+				    else {
+				    	error("parameter 'bv' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "cv") {
+				    	get_parameter(ss, rule.ac_par[10], rule.ac_val[10], n);
+				    }
+				    else {
+				    	error("parameter 'cv' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "dv") {
+				    	get_parameter(ss, rule.ac_par[11], rule.ac_val[11], n);
+				    }
+				    else {
+				    	error("parameter 'dv' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "mv") {
+				    	get_parameter(ss, rule.ac_par[12], rule.ac_val[12], n);
+				    }
+				    else {
+				    	error("parameter 'mv' expected", n);
+				    }
+		    	}
+		    	else if (word == "gm1") {
+		    		rule.action = REACT_GM1;
 			    	ss >> word;
 				    if (word == "a") {
 				    	get_parameter(ss, rule.ac_par[3], rule.ac_val[3], n);
@@ -795,6 +848,13 @@ void parser_load_pattern()
 				    }
 				    else {
 				    	error("parameter 'b' expected", n);
+				    }
+			    	ss >> word;
+				    if (word == "c") {
+				    	get_parameter(ss, rule.ac_par[5], rule.ac_val[5], n);
+				    }
+				    else {
+				    	error("parameter 'c' expected", n);
 				    }
 		    	}
 		    	else if (word == "cubic") {
@@ -821,9 +881,13 @@ void parser_load_pattern()
 				    	error("parameter 'c' expected", n);
 				    }
 		    	}
+	    		else {
+	    			error("unknown reaction model " + word, n);
+	    		}
 		    }
 		    else if (word == "change") {
 		    	rule.action = CHANGE;
+
 		    	// target parameter
 		    	get_parameter(ss, rule.ac_par[0], rule.ac_val[0], n);
 		    	if (rule.ac_par[0] == CONSTANT) {
@@ -841,6 +905,7 @@ void parser_load_pattern()
 		    	else if (rule.ac_par[0] >= 2 * MAX_CHEMICALS) {
 		    		error("cannot change map value", n);
 		    	}
+
 		    	// change quantity
 		    	get_parameter(ss, rule.ac_par[1], rule.ac_val[1], n);
 		    	ss >> word;
@@ -859,6 +924,7 @@ void parser_load_pattern()
 		    	}
 		    	rule.action = MAP;
 		    	float a, b;
+
 		    	// source parameter and interval
 		    	get_parameter(ss, rule.ac_par[0], rule.ac_val[0], n);
 		    	ss >> a >> b;
@@ -872,6 +938,7 @@ void parser_load_pattern()
 	    		if (word != "to") {
 	    			error("'to' expected in 'map' action", n);
 	    		}
+
 		    	// destination variable and range
 	    		ss >> word;
 	    		rule.ac_par[3] = (Parameter) (add_mapping(word, n) + 2 * MAX_CHEMICALS);
@@ -882,6 +949,7 @@ void parser_load_pattern()
 		    }
 		    else if (word == "polarize") {
 		    	rule.action = POLARIZE;
+
 		    	// source parameter
 		    	get_parameter(ss, rule.ac_par[0], rule.ac_val[0], n);
 		    	if (rule.ac_par[0] < 0 || rule.ac_par[0] >= MAX_CHEMICALS) {
@@ -929,7 +997,6 @@ void parser_load_pattern()
     			error("unknown action " + word, n);
     		}
 		    simulation_add_rule(rule);
-		    //std::cout << "added rule: " << rule << '\n';
 	    }
 	    else if (word == "colormap") {
 	    	// skip colormap commands
@@ -975,14 +1042,8 @@ void parser_load_pattern()
 		    		error("expected 'exit' command", n);
 		    	}
 		    	simulation.exit_at_end = true;
-		    	//std::cout << "exit simulation = " << simulation.exit_at_end << '\n';
 		    	continue;
 		    }
-	    	//std::cout << "take snapshots at ";
-	    	//for (unsigned int i = 0; i < simulation.snap_at.size(); i++) {
-	    	//	std::cout << simulation.snap_at[i] << ' ';
-	    	//}
-	    	//std::cout << '\n';
 	    	continue;
 	    }
 	    else if (word == "stop") {
@@ -991,7 +1052,6 @@ void parser_load_pattern()
 	    		error("expected 'at' command", n);
 	    	}
 	    	ss >> simulation.stop_at;
-	    	//std::cout << "stop simulation at " << simulation.stop_at << '\n';
 	    	continue;
 	    }
 	    else if (word == "texture") {
@@ -1001,7 +1061,6 @@ void parser_load_pattern()
 	    	}
 	    	ss >> simulation.texture_width;
 	    	ss >> simulation.texture_height;
-	    	//std::cout << "texture size " << simulation.texture_width << ' ' << simulation.texture_height << '\n';
 	    	continue;
 	    }
 	    else if (word == "zoom") {
@@ -1010,7 +1069,6 @@ void parser_load_pattern()
 	    		error("expected 'level' command", n);
 	    	}
 	    	ss >> simulation.zoom_level;
-	    	//std::cout << "zoom level " << simulation.zoom_level << '\n';
 	    	continue;
 	    }
 	    else {
@@ -1048,12 +1106,6 @@ void parser_load_colormap()
 		    	if (word == "heat") {
 		    		colormap_select(HEAT);
 		    	}
-		    	//else if (word == "washed") {
-		    	//	colormap_select(WASHED);
-		    	//}
-		    	//else if (word == "gray") {
-		    	//	colormap_select(GRAY);
-		    	//}
 		    	else if (word == "striped") {
 		    		colormap_select(STRIPED);
 		    	}
@@ -1063,7 +1115,6 @@ void parser_load_colormap()
 		    	else {
 		    		error("unknown colormap type", n);
 		    	}
-		    	//std::cout << "selected colormap is "<< word << '\n';
 		    }
 		    else if (word == "slot") {
 		    	int i;
@@ -1080,7 +1131,6 @@ void parser_load_colormap()
 			    	}
 		    		word = word.substr(1, word.length() - 2);
 		    		colormap_use_color(i, word.c_str());
-		    		//std::cout << "use color '" << word << "' in slot " << i << '\n';
 		    	}
 		    	else if (word == "rgb") {
 		    		int r, g, b;
@@ -1088,7 +1138,6 @@ void parser_load_colormap()
 		    		ss >> g;
 		    		ss >> b;
 		    		colormap_use_rgb(i, r, g, b);
-		    		//std::cout << "use rgb " << r << ' ' << g << ' ' << b << " in slot " << i << '\n';
 		    	}
 		    	else {
 		    		error("unknown color specification", n);

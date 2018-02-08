@@ -1,0 +1,20 @@
+// nudibranch
+
+define chemical U limit 5.2
+define chemical V
+
+// -------- prepattern
+
+use chemical U conc 4 dev 2 diff 0.08
+use chemical V conc 4 dev 2 diff 0.01
+create sqr_grid 100 100 wrap
+
+// -------- rules
+
+rule always react U V scale 0.02 turing alpha 16 beta 12
+
+colormap select gradient
+colormap slot 20 use color "white"
+colormap slot 50 use color "eaaa7a"
+
+stop at 3000

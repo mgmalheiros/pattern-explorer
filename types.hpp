@@ -1,6 +1,15 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+/*-------------------------------- COMPATIBILITY --------------------------------*/
+
+#ifdef _MSC_VER
+#define PAUSE_AND_EXIT system("pause");exit(1)
+#define M_PI 3.141593F
+#else
+#define PAUSE_AND_EXIT exit(1)
+#endif
+
 /*-------------------------------- INCLUDES --------------------------------*/
 
 #include <cfloat>
@@ -14,18 +23,18 @@
 
 /*-------------------------------- MACRO DEFINITIONS --------------------------------*/
 
+#define VERSION "v0.55"
+
 // 2 * cell radius * 1.1 = 2.2 // four-cell neighborhood: does not propagate adequately (von Neumann)
 // 2 * cell radius * 1.5 = 3.0 // eight-cell neighborhood (Moore)
 
-#define INFLUENCE_RANGE 3.0
+#define INFLUENCE_RANGE 3.0F
 
 #define MAX_CELLS      20000
 #define MAX_CHEMICALS  10
 #define MAX_MAPPINGS   10
 #define MAX_RULES      20
-#define MAX_PARAMETERS 6
-
-//#define NNS_PRECISION
+#define MAX_PARAMETERS 15
 
 #ifdef __GNUC__
 #  define UNUSED __attribute__((__unused__))
@@ -35,7 +44,7 @@
 
 /*-------------------------------- TYPE DEFINITIONS --------------------------------*/
 
-STRONG_TYPEDEF(int, CellId);
+STRONG_TYPEDEF(int, CellId)
 
 class Cell {
 public:
@@ -45,10 +54,7 @@ public:
     float conc[MAX_CHEMICALS];
     float diff[MAX_CHEMICALS];
     bool  fixed;
-    bool  marker; // TODO: needed only for neighborhood display
-#ifdef NNS_PRECISION
-    int error;
-#endif // NNS_PRECISION
+    bool  marker; // used only for neighborhood display
 };
 
 class Chemical {
@@ -57,7 +63,12 @@ public:
 	float       limit;
 	bool        anisotropic;
 
-	Chemical ()
+	Chemical()
+	{
+		reset();
+	}
+
+	void reset()
 	{
 		limit = FLT_MAX;
 		anisotropic = false;
@@ -65,7 +76,7 @@ public:
 };
 
 enum Predicate {NEVER, ALWAYS, IF_EQUAL, IF_NOT_EQUAL, IF_LESS_THAN, IF_LESS_EQUAL, IF_GREATER_THAN, IF_GREATER_EQUAL, IF_IN_INTERVAL, PROBABILITY};
-enum Action    {NONE, REACT_GS, REACT_TU, REACT_LI, REACT_CU, CHANGE, MAP, POLARIZE, DIVIDE, MOVE, AND};
+enum Action    {NONE, REACT_TU, REACT_GS, REACT_LI, REACT_GM1, REACT_CU, CHANGE, MAP, POLARIZE, DIVIDE, MOVE, AND};
 enum Parameter {CONSTANT = -1, NEIGHBORS = -2, AGE = -3, BIRTH = -4};
 
 class Rule {
@@ -81,7 +92,7 @@ public:
 	Parameter ac_par[MAX_PARAMETERS];
 	float     ac_val[MAX_PARAMETERS];
 
-	Rule ()
+	Rule()
 	{
 		from = 0;
 		until = INT_MAX;
@@ -120,14 +131,10 @@ public:
 class Statistics {
 public:
 	bool is_first;
-	//int last_birth;
 	float cell_xmin, cell_xmax;
 	float cell_ymin, cell_ymax;
 	float cell_nmin, cell_nmax, cell_navg;
 	float chem_min[MAX_CHEMICALS], chem_max[MAX_CHEMICALS];
-#ifdef NNS_PRECISION
-	float error_max;
-#endif // NNS_PRECISION
 
 	Statistics()
 	{
@@ -142,14 +149,11 @@ public:
 	void update(const Cell& cell, int n_chemicals)
 	{
 		if (is_first) {
-			//last_birth = cell.birth;
 			cell_xmin = cell_xmax = cell.x;
 			cell_ymin = cell_ymax = cell.y;
-			cell_nmin = cell_nmax = sum_neighbors = cell.neighbors;
+			sum_neighbors = cell.neighbors;
+			cell_nmin = cell_nmax = (float) cell.neighbors;
 		    cell_navg = 0;
-#ifdef NNS_PRECISION
-		    error_max = 0;
-#endif // NNS_PRECISION
 
 			for (int c = 0; c < n_chemicals; c++) {
 				chem_min[c] = chem_max[c] = cell.conc[c];
@@ -157,26 +161,20 @@ public:
 			is_first = false;
 		}
 		else {
-			//if (cell.birth > last_birth) { last_birth = cell.birth; }
-
 			if      (cell.x < cell_xmin) { cell_xmin = cell.x; }
 			else if (cell.x > cell_xmax) { cell_xmax = cell.x; }
 
 			if      (cell.y < cell_ymin) { cell_ymin = cell.y; }
 			else if (cell.y > cell_ymax) { cell_ymax = cell.y; }
 
-			if      (cell.neighbors < cell_nmin) { cell_nmin = cell.neighbors; }
-			else if (cell.neighbors > cell_nmax) { cell_nmax = cell.neighbors; }
+			if      (cell.neighbors < cell_nmin) { cell_nmin = (float) cell.neighbors; }
+			else if (cell.neighbors > cell_nmax) { cell_nmax = (float) cell.neighbors; }
 			sum_neighbors += cell.neighbors;
 
 			for (int c = 0; c < n_chemicals; c++) {
 				if      (cell.conc[c] < chem_min[c]) { chem_min[c] = cell.conc[c]; }
 				else if (cell.conc[c] > chem_max[c]) { chem_max[c] = cell.conc[c]; }
 			}
-
-#ifdef NNS_PRECISION
-			if (cell.error > error_max) { error_max = cell.error; }
-#endif // NNS_PRECISION
 		}
 	}
 
@@ -191,6 +189,9 @@ private:
 
 class Simulation {
 public:
+    Cell *curr_cells;
+    Cell *next_cells;
+
 	int n_cells;
 	int n_chemicals;
 
@@ -198,17 +199,14 @@ public:
 	float domain_xmin, domain_xmax;
 	float domain_ymin, domain_ymax;
 	bool  domain_is_packed;
-	float domain_packed_factor;
+	float domain_packed_area;
 	bool  is_running;
 	int   iteration;
 	float time_step;
 
-    Cell *curr_cells;
-    Cell *next_cells;
-
     Chemical chemicals[MAX_CHEMICALS];
 
-    CellId tracked_id; // TODO: needed only for neighborhood display
+    CellId tracked_id; // used only for neighborhood display
 
     std::vector<Rule> rules;
 
@@ -230,38 +228,55 @@ public:
 public:
 	Simulation()
 	{
-		n_cells = 0;
-		n_chemicals = 0;
-
-		domain_xmin = domain_ymin = -500;
-		domain_xmax = domain_ymax = 500;
-		domain_is_packed = false;
-		domain_packed_factor = 3.2; // empirical, between unit circle area (3.14159) and square area (4)
-		is_running = true;
-		iteration = 0;
-		time_step = 1.0;
-		division_limit = 0;
-
         curr_cells = new Cell[MAX_CELLS];
         next_cells = new Cell[MAX_CELLS];
 
-        tracked_id = (CellId) -1;
-
-        mirroring = false;
-
-		exit_at_end = false;
-		stop_at = -1;
-		texture_width = texture_height = 256;
-		zoom_level = 0;
-
-		detect_stability = false;
-	    is_stable = false;
+        reset();
 	}
 
     ~Simulation()
     {
         delete[] curr_cells;
         delete[] next_cells;
+    }
+
+    void reset()
+    {
+		n_cells = 0;
+		n_chemicals = 0;
+		for (int i = 0; i < MAX_CHEMICALS; i++) {
+			chemicals[i].reset();
+		}
+
+		domain_xmin = domain_ymin = -500;
+		domain_xmax = domain_ymax = 500;
+		domain_is_packed = false;
+		// 3.2 is an empirical value, between the unit circle area (3.14159) and
+		// its respective circumscribed square area (4)
+		domain_packed_area = 3.2F;
+		// the perfect circle packing on plane would be M_PI / 0.9069F ~ 3.464
+		is_running = true;
+		iteration = 0;
+		time_step = 1.0;
+		division_limit = 0;
+
+        tracked_id = (CellId) -1;
+
+        rules.clear();
+
+        mappings.clear();
+
+        mirror_list.clear();
+        mirroring = false;
+
+		exit_at_end = false;
+		snap_at.clear();
+		stop_at = -1;
+		texture_width = texture_height = 256;
+		zoom_level = 0;
+
+		detect_stability = false;
+	    is_stable = false;
     }
 
     CellId new_cell()

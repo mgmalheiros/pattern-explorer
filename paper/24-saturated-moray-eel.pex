@@ -1,4 +1,4 @@
-// moray eel (muraena melanotis)
+// moray eel
 
 define chemical U limit 6.5
 define chemical V limit 6.5
@@ -40,4 +40,3 @@ colormap slot 40 use color "white"
 stop at 5000
 
 texture size 800 400
-

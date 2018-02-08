@@ -1,3 +1,5 @@
+// rays
+
 define chemical V anisotropic
 define chemical U
 define chemical P
@@ -28,4 +30,3 @@ colormap slot 0  use color "white"
 colormap slot 99 use color "420009"
 
 stop at 10000
-

@@ -1,0 +1,20 @@
+// test of different mirroring cases
+
+define chemical V
+define chemical U
+
+// -------- prepattern
+
+use seed 1
+
+use chemical U conc 4 dev 2 diff 0.08
+use chemical V conc 4 dev 2 diff 0.01
+
+create shape "shape-02-mirroring-cases.shp"
+
+// -------- rules
+
+rule always react U V scale 0.02 turing alpha 16 beta 12
+
+stop at 10000
+

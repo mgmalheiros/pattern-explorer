@@ -1,55 +1,70 @@
-OPTIONS = -O2 -Wall -Wextra -I/home/mgm/local/packages/include# -g
-LIBS	= -L/home/mgm/local/packages/lib -lrt
+# Optional dependencies
 
-ATB     = -lAntTweakBar
-CGAL    = -lCGAL -lboost_system -lgmp
-OPENGL	= -lglut -lGL
-PNG		= -lpng
+OPT_PNG = #-DENABLE_PNG -I...
+LIB_PNG = #-lpng -L...
+
+OPT_CGAL = #-DENABLE_CGAL -I...
+LIB_CGAL = #-lCGAL -lboost_system -lgmp -L...
+
+# Required dependencies
+
+OPT_ATB = #-I...
+LIB_ATB = -lAntTweakBar #-L...
+
+OPT_GLM = #-I...
+
+OPT_OPENGL = #-I...
+LIB_OPENGL = -lglut -lGL #-L...
+
+# General settings
+
+OPT = -O2 -Wall -Wextra
+LIB = -m
+
+# Programs
 
 all: pattern offline simple
 
-# PROGRAMS
-
 pattern: colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o pattern.o simulation.o
-	g++  colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o pattern.o simulation.o $(LIBS) $(ATB) $(CGAL) $(OPENGL) $(PNG) -o pattern 
+	g++  colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o pattern.o simulation.o $(LIB_PNG) $(LIB_CGAL) $(LIB_ATB) $(LIB_OPENGL) $(LIB) -o pattern
 
 pattern.o: colormap.hpp export.hpp nns_base.hpp parser.hpp simulation.hpp types.hpp pattern.cpp
-	g++ $(OPTIONS) -c pattern.cpp
+	g++ $(OPT) $(OPT_PNG) $(OPT_CGAL) $(OPT_ATB) $(OPT_GLM) $(OPT_OPENGL) -c pattern.cpp
 
 offline: colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o offline.o simulation.o
-	g++  colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o offline.o simulation.o $(LIBS) $(CGAL) $(PNG) -o offline
+	g++  colormap.o export.o nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o parser.o offline.o simulation.o $(LIB_PNG) $(LIB_CGAL) $(LIB) -o offline
 
 offline.o: colormap.hpp export.hpp nns_base.hpp parser.hpp simulation.hpp types.hpp offline.cpp
-	g++ $(OPTIONS) -c offline.cpp
+	g++ $(OPT) $(OPT_PNG) $(OPT_CGAL) -c offline.cpp
 
 simple: nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o simple.o simulation.o
-	g++ nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o simple.o simulation.o $(LIBS) -o simple 
+	g++ nns_kd_tree.o nns_spatial_sorting.o nns_square_grid.o simple.o simulation.o $(LIB) -o simple
 
 simple.o: nns_base.hpp simulation.hpp types.hpp simple.cpp
-	g++ $(OPTIONS) -c simple.cpp
+	g++ $(OPT) -c simple.cpp
 
-# MODULES
+# Modules
 
 colormap.o: colormap.hpp colormap.cpp
-	g++ $(OPTIONS) -c colormap.cpp 
+	g++ $(OPT) -c colormap.cpp
 
 export.o: export.hpp export.cpp
-	g++ $(OPTIONS) -c export.cpp 
+	g++ $(OPT) $(OPT_PNG) $(OPT_CGAL) -c export.cpp
 
 nns_kd_tree.o: nns_base.hpp types.hpp nns_kd_tree.cpp
-	g++ $(OPTIONS) -c nns_kd_tree.cpp 
+	g++ $(OPT) -c nns_kd_tree.cpp
 
 nns_spatial_sorting.o: nns_base.hpp types.hpp nns_spatial_sorting.cpp
-	g++ $(OPTIONS) -c nns_spatial_sorting.cpp 
+	g++ $(OPT) -c nns_spatial_sorting.cpp
 
 nns_square_grid.o: nns_base.hpp types.hpp nns_square_grid.cpp
-	g++ $(OPTIONS) -c nns_square_grid.cpp 
+	g++ $(OPT) -c nns_square_grid.cpp
 
 parser.o: parser.hpp parser.cpp
-	g++ $(OPTIONS) -c parser.cpp 
+	g++ $(OPT) -c parser.cpp
 
 simulation.o: simulation.hpp simulation.cpp
-	g++ $(OPTIONS) -c simulation.cpp 
+	g++ $(OPT) -c simulation.cpp
 
 clean:
 	rm -f pattern offline simple *.o

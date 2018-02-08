@@ -51,10 +51,10 @@ public:
     virtual CellId *query_current_range(float r) = 0;
 
     virtual CellId *query_range(CellId id, float r) = 0;
-    //virtual CellId *query_nearest(CellId id, int k) = 0;
+    // TODO: virtual CellId *query_nearest(CellId id, int k) = 0;
 
-    // get used  memory
-    // get total memory
+    // TODO: get used memory
+    // TODO: get total memory
 };
 
 /*-------------------------------- IMPLEMENTATIONS --------------------------------*/
@@ -133,7 +133,7 @@ private:
 	int n_size;
     int candidates[121];
     CellId neighbors[121];
-    
+
     std::vector<bool> row_is_sorted;
     std::vector<bool> col_is_sorted;
 

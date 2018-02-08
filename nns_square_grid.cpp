@@ -13,8 +13,8 @@ NNS_SquareGrid::NNS_SquareGrid(int dim_x, int dim_y, bool wrap)
 	positions = new Position[MAX_CELLS];
 
 	if (dim_x == 1 || dim_y == 1) {
-		std::cerr << "error: square grid does not accept unit dimensions: " << dim_x << " x " << dim_y << '\n';
-		exit(1);
+		std::cerr << "nns: square grid does not accept unit dimensions: " << dim_x << " x " << dim_y << '\n';
+		PAUSE_AND_EXIT;
 	}
 	this->dim_x = dim_x;
 	this->dim_y = dim_y;

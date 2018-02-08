@@ -1,3 +1,9 @@
+/*-------------------------------- COMPATIBILITY --------------------------------*/
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 /*-------------------------------- INCLUDES --------------------------------*/
 
 #include <cfloat>
@@ -38,8 +44,12 @@ enum CellExhibition {OCTOGON = 0, SQUARE, HEXAGON_INSIDE, HEXAGON_OUTSIDE, CIRCL
 
 void graphics_done();
 void bar_show(bool b);
+void reload();
 
 /*-------------------------------- LOCAL VARIABLES --------------------------------*/
+
+static bool detect = false;
+static NNSChoice nns_choice = AUTO;
 
 static CellExhibition cell_ex = OCTOGON;
 
@@ -67,33 +77,43 @@ static glm::vec3 offset_point;
 static TwBar *bar = NULL;
 static int    bar_w = 160;
 
+#ifdef ENABLE_PNG
 static int out_counter = 0;
 static GLubyte *pixels = NULL;
+#endif // ENABLE_PNG
 
 /*-------------------------------- LOCAL UTILITY FUNCTIONS --------------------------------*/
 
-static char *concat(const char *s, int n)
+static char *util_strdup(const char *s)
 {
-	char tmp[100];
-	snprintf(tmp, sizeof(tmp), "%s%d", s, n);
-	return strdup(tmp);
+    char *ret = new char[strlen(s) + 1];
+	return strcpy(ret, s);
 }
 
-static char *concat(int n1, const char *s, int n2)
+static char *util_concat(const char *s, int n)
+{
+    char tmp[100];
+    snprintf(tmp, sizeof(tmp), "%s%d", s, n);
+    return util_strdup(tmp);
+}
+
+static char *util_concat(int n1, const char *s, int n2)
 {
 	char tmp[100];
 	snprintf(tmp, sizeof(tmp), "%d%s%d", n1, s, n2);
-	return strdup(tmp);
+    return util_strdup(tmp);
 }
 
-static char *concat(const char *s1, const char *s2)
+static char *util_concat(const char *s1, const char *s2)
 {
 	char tmp[100];
 	snprintf(tmp, sizeof(tmp), "%s%s", s1, s2);
-	return strdup(tmp);
+    return util_strdup(tmp);
 }
 
 /*-------------------------------- SCREEN CAPTURE FUNCTIONS --------------------------------*/
+
+#ifdef ENABLE_PNG
 
 void take_snapshot()
 {
@@ -107,6 +127,8 @@ void take_snapshot()
 	out_counter++;
 }
 
+#endif // ENABLE_PNG
+
 /*-------------------------------- GRAPHICS FUNCTIONS --------------------------------*/
 
 void display()
@@ -114,37 +136,20 @@ void display()
 //	struct timespec t0, t1;
 //	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t0);
 
-//	if (vector)
-//	{
-//		vector_open_file();
-//	}
-
     glClear(GL_COLOR_BUFFER_BIT);
 
     glLoadIdentity();
     glScalef(simulation.zoom_level, simulation.zoom_level, 1);
     glTranslatef(offset_x, offset_y, 0);
 
-#ifndef NNS_PRECISION
     colormap_set_limits(statistics.chem_min[value_active], statistics.chem_max[value_active]);
-#else
-    colormap_set_limits(0, statistics.error_max);
-#endif // NNS_PRECISION
 
     // draw cells
 	for (int i = 0; i < simulation.n_cells; i++) {
 		Cell& curr_cell = simulation.curr_cells[i];
 		float x = curr_cell.x;
 		float y = curr_cell.y;
-#ifndef NNS_PRECISION
 		glColor3fv(colormap_lookup(curr_cell.conc[value_active]));
-#else
-		glColor3fv(colormap_lookup(curr_cell.error));
-#endif // NNS_PRECISION
-
-//		if (vector) {
-//			vector_draw_cell(x, y, r);
-//		}
 
 		if (show_neighbors && (curr_cell.marker == true)) {
 			glColor3f(1, 1, 1);
@@ -154,13 +159,13 @@ void display()
 			// draw a filled octogon
 			glBegin(GL_TRIANGLE_FAN);
 			glVertex2f(x + 1,      y);
-			glVertex2f(x + 0.7071, y + 0.7071);
+			glVertex2f(x + 0.7071F, y + 0.7071F);
 			glVertex2f(x,          y + 1);
-			glVertex2f(x - 0.7071, y + 0.7071);
+			glVertex2f(x - 0.7071F, y + 0.7071F);
 			glVertex2f(x - 1,      y);
-			glVertex2f(x - 0.7071, y - 0.7071);
+			glVertex2f(x - 0.7071F, y - 0.7071F);
 			glVertex2f(x,          y - 1);
-			glVertex2f(x + 0.7071, y - 0.7071);
+			glVertex2f(x + 0.7071F, y - 0.7071F);
 			glEnd();
 		}
 		else if (cell_ex == SQUARE) {
@@ -176,22 +181,22 @@ void display()
 			// draw a filled inscribed hexagon
 			glBegin(GL_TRIANGLE_FAN);
 			glVertex2f(x        , y - 1);
-			glVertex2f(x + 0.866, y - 0.5);
-			glVertex2f(x + 0.866, y + 0.5);
+			glVertex2f(x + 0.866F, y - 0.5F);
+			glVertex2f(x + 0.866F, y + 0.5F);
 			glVertex2f(x        , y + 1);
-			glVertex2f(x - 0.866, y + 0.5);
-			glVertex2f(x - 0.866, y - 0.5);
+			glVertex2f(x - 0.866F, y + 0.5F);
+			glVertex2f(x - 0.866F, y - 0.5F);
 			glEnd();
 		}
 		else if (cell_ex == HEXAGON_OUTSIDE) {
 			// draw a filled circumscribed hexagon
 			glBegin(GL_TRIANGLE_FAN);
-			glVertex2f(x    , y - 1.1547);
-			glVertex2f(x + 1, y - 0.577);
-			glVertex2f(x + 1, y + 0.577);
-			glVertex2f(x    , y + 1.1547);
-			glVertex2f(x - 1, y + 0.577);
-			glVertex2f(x - 1, y - 0.577);
+			glVertex2f(x    , y - 1.1547F);
+			glVertex2f(x + 1, y - 0.577F);
+			glVertex2f(x + 1, y + 0.577F);
+			glVertex2f(x    , y + 1.1547F);
+			glVertex2f(x - 1, y + 0.577F);
+			glVertex2f(x - 1, y - 0.577F);
 			glEnd();
 		}
 		else {
@@ -203,12 +208,6 @@ void display()
 			glEnd();
 		}
 	}
-
-//	if (vector)
-//	{
-//		vector_close_file();
-//		vector = false;
-//	}
 
 	// draw mirror pairs
 	if (show_mirrors) {
@@ -251,19 +250,19 @@ void display()
     	// draw an octagonal outline
     	glBegin(GL_LINE_LOOP);
 		glVertex2f(x + INFLUENCE_RANGE,          y);
-		glVertex2f(x + INFLUENCE_RANGE * 0.7071, y + INFLUENCE_RANGE * 0.7071);
+		glVertex2f(x + INFLUENCE_RANGE * 0.7071F, y + INFLUENCE_RANGE * 0.7071F);
 		glVertex2f(x,                            y + INFLUENCE_RANGE);
-		glVertex2f(x - INFLUENCE_RANGE * 0.7071, y + INFLUENCE_RANGE * 0.7071);
+		glVertex2f(x - INFLUENCE_RANGE * 0.7071F, y + INFLUENCE_RANGE * 0.7071F);
 		glVertex2f(x - INFLUENCE_RANGE,          y);
-		glVertex2f(x - INFLUENCE_RANGE * 0.7071, y - INFLUENCE_RANGE * 0.7071);
+		glVertex2f(x - INFLUENCE_RANGE * 0.7071F, y - INFLUENCE_RANGE * 0.7071F);
 		glVertex2f(x,                            y - INFLUENCE_RANGE);
-		glVertex2f(x + INFLUENCE_RANGE * 0.7071, y - INFLUENCE_RANGE * 0.7071);
+		glVertex2f(x + INFLUENCE_RANGE * 0.7071F, y - INFLUENCE_RANGE * 0.7071F);
     	glEnd();
     }
 
     // draw domain limits
     if (show_domain) {
-    	glColor3f(0.2, 0.2, 0.2);
+    	glColor3f(0.2F, 0.2F, 0.2F);
     	glBegin(GL_LINE_LOOP);
     	glVertex2f(simulation.domain_xmax, simulation.domain_ymax);
     	glVertex2f(simulation.domain_xmin, simulation.domain_ymax);
@@ -286,7 +285,7 @@ void reshape(int w, int h)
 	window_w = w;
 	window_h = h;
     TwWindowSize(window_w, window_h);
-    TwSetParam(bar, NULL, "size", TW_PARAM_CSTRING, 1, concat(bar_w, " ", window_h));
+    TwSetParam(bar, NULL, "size", TW_PARAM_CSTRING, 1, util_concat(bar_w, " ", window_h));
 
     if (show_bar) {
     	w -= bar_w;
@@ -348,8 +347,12 @@ void idle()
 	if (simulation.is_running) {
 		if (simulation.snap_at.size()) {
 			if (simulation.snap_at[0] == simulation.iteration || simulation.is_stable) {
+
+#ifdef ENABLE_PNG
 				std::cout << "gui: snap at " << simulation.iteration << "\n";
 				take_snapshot();
+#endif // ENABLE_PNG
+
 				simulation.snap_at.erase(simulation.snap_at.begin());
 
 				// there are no snapshots left
@@ -368,7 +371,6 @@ void idle()
 				}
 			}
 			else {
-				//std::cout << "run " << simulation.snap_at[0] - simulation.iteration << " steps\n";
 				simulation_run(simulation.snap_at[0] - simulation.iteration);
 			}
 		}
@@ -425,15 +427,6 @@ void keyboard(unsigned char key, int x, int y)
         	show_domain ^= 1;
             glutPostRedisplay();
             break;
-//        case 'e': // export cell data
-//        	FILE *f;
-//        	f = fopen("points.txt", "w");
-//        	for (int i = 0; i < cell_count; i++) {
-//        		fprintf(f, "%g %g\n", simulation.position_array[i].x, -simulation.position_array[i].y);
-//        	}
-//        	fclose(f);
-//        	printf("points saved!\n");
-//        	break;
         case 'i': // show or hide mirror pairs
         	show_mirrors ^= 1;
             glutPostRedisplay();
@@ -445,6 +438,7 @@ void keyboard(unsigned char key, int x, int y)
         	map_active = colormap_get_selected();
             TwRefreshBar(bar);
             glutPostRedisplay();
+            std::cout << "gui: colormap reloaded\n";
             break;
         case 'm': // change active colormap
         	map_active = (Colormap) ((map_active + 1) % 3); // was 5
@@ -457,11 +451,21 @@ void keyboard(unsigned char key, int x, int y)
             glutPostRedisplay();
             break;
         case 'o': // output image
+#ifdef ENABLE_PNG
         	take_snapshot();
         	std::cout << "gui: snapshot saved\n";
+#else
+        	std::cout << "gui: support for snapshot is not available\n";
+#endif // ENABLE_PNG
             break;
         case 'p': // show or hide polarity vectors
         	show_polarity ^= 1;
+            glutPostRedisplay();
+            break;
+        case 'r': // reload experiment
+        	std::cout << "gui: reloading experiment...\n\n";
+        	reload();
+            TwRefreshBar(bar);
             glutPostRedisplay();
             break;
         case 's': // start/stop
@@ -469,19 +473,18 @@ void keyboard(unsigned char key, int x, int y)
             TwRefreshBar(bar);
             break;
         case 't': // output high-quality interpolated texture
+#ifdef ENABLE_CGAL
         	std::cout << "gui: saving " << simulation.texture_width << " by " << simulation.texture_height << " texture...\n";
         	export_texture(value_active, simulation.texture_width, simulation.texture_height);
         	std::cout << "gui: ... done\n";
+#else
+        	std::cout << "gui: support for texture output is not available\n";
+#endif // ENABLE_CGAL
             break;
-//        case 'w': // output high-quality interpolated wrapped texture
-//        	std::cout << "gui: saving " << simulation.texture_width << " by " << simulation.texture_height << " wrapped texture...\n";
-//        	export_texture_wrap(value_active, simulation.texture_width, simulation.texture_height, 64, 64);
-//        	std::cout << "gui: ... done\n";
+        case 'v': // generate vector output
+        	export_vector(value_active);
+        	std::cout << "gui: vector output saved\n";
             break;
-//        case 'v': // generate vector output
-//        	vector = true;
-//            glutPostRedisplay();
-//            break;
         case 'x': // change cell exhibition type
         	cell_ex = (CellExhibition) ((cell_ex + 1) % 5);
             glutPostRedisplay();
@@ -500,7 +503,6 @@ void mouse_click(int button, int state, int x, int y)
         pick_mode = true;
         glutSetCursor(GLUT_CURSOR_INFO);
         picked_point = unproject(x, y);
-    	//std::cout << "picked at " << x << "," << y << " corresponds to " << picked_point.x << "," << picked_point.y << '\n';
     	CellId id = nns->locate_nearest(picked_point.x, picked_point.y);
 		picked_cell_id = id;
 		TwDefine("Simulation/Cell visible=true");
@@ -524,17 +526,14 @@ void mouse_click(int button, int state, int x, int y)
         move_mode = true;
         glutSetCursor(GLUT_CURSOR_LEFT_RIGHT);
         picked_point = unproject(x, y);
-    	//std::cout << "picked at " << x << "," << y << " corresponds to " << picked_point.x << "," << picked_point.y << '\n';
         CellId id = nns->locate_nearest(picked_point.x, picked_point.y);
         float x = simulation.curr_cells[id].x;
         float y = simulation.curr_cells[id].y;
     	if ((picked_point.x - x) * (picked_point.x - x) + (picked_point.y - y) * (picked_point.y - y) <= 1) {
-    		//std::cout << "picked cell at " << x << "," << y << " id=" << id << '\n';
     		picked_cell_id = id;
     		TwDefine("Simulation/Cell visible=true");
     	}
     	else {
-    		//std::cout << "no cell picked\n";
     		picked_cell_id = -1;
     		TwDefine("Simulation/Cell visible=false");
     	}
@@ -546,11 +545,11 @@ void mouse_click(int button, int state, int x, int y)
         glutSetCursor(GLUT_CURSOR_INHERIT);
     }
     else if (button == 3 && state == GLUT_UP && simulation.zoom_level < 8.0) { // scroll button up
-    	simulation.zoom_level += 0.1;
+    	simulation.zoom_level += 0.1F;
         glutPostRedisplay();
     }
     else if (button == 4 && state == GLUT_UP && simulation.zoom_level > 0.2) { // scroll button down
-    	simulation.zoom_level -= 0.1;
+    	simulation.zoom_level -= 0.1F;
         glutPostRedisplay();
     }
 }
@@ -734,7 +733,7 @@ void bar_init()
 
     bar = TwNewBar("Simulation");
     TwDefine("Simulation refresh=0.5 position='0 0' valueswidth=fit iconifiable=false movable=false resizable=false");
-    TwSetParam(bar, NULL, "size", TW_PARAM_CSTRING, 1, concat(bar_w, " ", window_h));
+    TwSetParam(bar, NULL, "size", TW_PARAM_CSTRING, 1, util_concat(bar_w, " ", window_h));
 
     /*---------------- main variables --------------*/
 
@@ -744,7 +743,6 @@ void bar_init()
     /*---------------- statistics group --------------*/
 
     TwAddVarRO(bar, "cells",      TW_TYPE_INT32, &simulation.n_cells,    "group='Statistics'");
-    //TwAddVarRO(bar, "last_birth", TW_TYPE_INT32, &statistics.last_birth, "group='Statistics' label='last birth'");
 
     TwAddVarRO(bar, "cell_xmax",  TW_TYPE_FLOAT, &statistics.cell_xmax, "group='Geometry' precision=1 label='x max'");
     TwAddVarRO(bar, "cell_xmin",  TW_TYPE_FLOAT, &statistics.cell_xmin, "group='Geometry' precision=1 label='x min'");
@@ -758,19 +756,19 @@ void bar_init()
 
     int n_chemicals = (int) simulation.n_chemicals;
     for (int ch = 0; ch < n_chemicals; ch++) {
-    	char *name  = concat("chem_max", ch);
+    	char *name  = util_concat("chem_max", ch);
     	TwAddVarRO(bar, name, TW_TYPE_FLOAT, &statistics.chem_max[ch], "group='Chemicals' precision=4");
-    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, concat(simulation.chemicals[ch].name.c_str(), " max"));
-    	name  = concat("chem_min", ch);
+    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, util_concat(simulation.chemicals[ch].name.c_str(), " max"));
+    	name = util_concat("chem_min", ch);
     	TwAddVarRO(bar, name, TW_TYPE_FLOAT, &statistics.chem_min[ch], "group='Chemicals' precision=4");
-    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, concat(simulation.chemicals[ch].name.c_str(), " min"));
+    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, util_concat(simulation.chemicals[ch].name.c_str(), " min"));
     }
     TwDefine("Simulation/Chemicals opened=true");
     TwDefine("Simulation/Chemicals group='Statistics'");
 
     /*---------------- display group --------------*/
 
-    TwEnumVal val_enum[n_chemicals];
+    TwEnumVal *val_enum = new TwEnumVal[n_chemicals];
     for (int v = 0; v < n_chemicals; v++) {
     	val_enum[v].Value = v;
     	val_enum[v].Label = simulation.chemicals[v].name.c_str();
@@ -796,12 +794,12 @@ void bar_init()
     TwAddVarCB(bar, "py",    TW_TYPE_FLOAT, set_cell_state, get_cell_state, &ca[CELL_PY],    "group='Cell' precision=1");
     // TODO: add "fixed" state?
     for (int ch = 0; ch < (int) simulation.n_chemicals; ch++) {
-    	char *name  = concat("conc", ch);
+    	char *name = util_concat("conc", ch);
         TwAddVarCB(bar, name, TW_TYPE_FLOAT, set_cell_state, get_cell_state, &ca[CONC_0 + ch], "group='Cell' precision=4");
-    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, concat(simulation.chemicals[ch].name.c_str(), " conc"));
-    	name  = concat("diff", ch);
+    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, util_concat(simulation.chemicals[ch].name.c_str(), " conc"));
+    	name = util_concat("diff", ch);
         TwAddVarCB(bar, name, TW_TYPE_FLOAT, set_cell_state, get_cell_state, &ca[DIFF_0 + ch], "group='Cell' precision=4");
-    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, concat(simulation.chemicals[ch].name.c_str(), " diff"));
+    	TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, util_concat(simulation.chemicals[ch].name.c_str(), " diff"));
     }
     TwDefine("Simulation/Cell opened=true");
 	TwDefine("Simulation/Cell visible=false");
@@ -829,7 +827,7 @@ void graphics_init(int *pargc, char *argv[])
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
     glutInitWindowPosition(window_x, window_y);
     glutInitWindowSize(window_w, window_h);
-    glutCreateWindow("pattern explorer");
+    glutCreateWindow("Pattern Explorer " VERSION);
 
     glutDisplayFunc(display);
     glutIdleFunc(idle);
@@ -854,7 +852,27 @@ void graphics_init(int *pargc, char *argv[])
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     map_active = colormap_get_selected();
-    
+
+	// hide bar and start simulation if there are snapshots to be taken
+	if (simulation.snap_at.size() != 0) {
+		bar_show(false);
+		simulation.is_running = true;
+	}
+	else  {
+		bar_show(true);
+		simulation.is_running = false;
+	}
+}
+
+void graphics_reset()
+{
+	picked_cell_id = (CellId) -1;
+	TwDefine("Simulation/Cell visible=false");
+
+	if (simulation.zoom_level == 0) {
+    	center_view();
+    }
+
 	// hide bar and start simulation if there are snapshots to be taken
 	if (simulation.snap_at.size() != 0) {
 		bar_show(false);
@@ -874,28 +892,29 @@ void graphics_loop()
 void graphics_done()
 {
 	TwTerminate();
+
+#ifdef ENABLE_PNG
 	free(pixels);
+#endif // ENABLE_PNG
 }
 
 int main(int argc, char *argv[])
 {
     if (argc == 1) {
-    	std::cout << "usage: pattern [OPTION] ... FILE.pat\n";
-    	std::cout << "  --ss         force use of spatial sorting\n";
-    	std::cout << "  --kd         force use of k-d tree\n";
-    	std::cout << "  --detect     exit as soon as stability is detected\n";
-    	std::cout << "  --oct        draw each cell as an octogon (default)\n";
-    	std::cout << "  --sqr        draw each cell as a square\n";
-    	std::cout << "  --hex_in     draw each cell as an inscribed hexagon\n";
-    	std::cout << "  --hex_out    draw each cell as a circumscribed hexagon\n";
-    	std::cout << "  --circle     draw each cell as a circle\n";
-    	std::cout << '\n';
-    	exit(1);
+    	std::cerr << "usage: pattern [OPTION] ... FILE.pex\n";
+    	std::cerr << "  --ss         force use of spatial sorting\n";
+    	std::cerr << "  --kd         force use of k-d tree\n";
+    	std::cerr << "  --detect     exit as soon as stability is detected\n";
+    	std::cerr << "  --oct        draw each cell as an octogon (default)\n";
+    	std::cerr << "  --sqr        draw each cell as a square\n";
+    	std::cerr << "  --hex_in     draw each cell as an inscribed hexagon\n";
+    	std::cerr << "  --hex_out    draw each cell as a circumscribed hexagon\n";
+    	std::cerr << "  --circle     draw each cell as a circle\n";
+    	std::cerr << '\n';
+    	PAUSE_AND_EXIT;
     }
     argv++; argc--;
 
-    bool detect = false;
-    NNSChoice nns_choice = AUTO;
     while ((*argv)[0] == '-') {
     	if (strcmp(*argv, "--ss") == 0) {
     		nns_choice = SPATIAL_SORTING;
@@ -922,11 +941,13 @@ int main(int argc, char *argv[])
     		cell_ex = CIRCLE;
     	}
     	else {
-    		std::cout << "unknown option '" << *argv << "'\n";
-    		exit(1);
+    		std::cerr << "unknown option '" << *argv << "'\n";
+    		PAUSE_AND_EXIT;
     	}
     	argv++; argc--;
     }
+
+    simulation_use_seed(1); // default to use when not explicitly set
 
 	parser_init(*argv);
 	parser_load_pattern();
@@ -941,4 +962,20 @@ int main(int argc, char *argv[])
     graphics_loop(); // never returns
 
     return 0;
+}
+
+void reload()
+{
+	simulation_reset();
+
+	parser_load_pattern();
+
+	colormap_init();
+	parser_load_colormap();
+	colormap_generate();
+	map_active = colormap_get_selected();
+
+	simulation_init(nns_choice, detect);
+
+    graphics_reset();
 }

@@ -69,5 +69,5 @@ colormap slot 80 use color "f5e8a8"
 
 stop at 14000
 
+texture size 512 512
 zoom level 1.503
-

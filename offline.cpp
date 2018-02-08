@@ -17,11 +17,11 @@
 int main(int argc, char *argv[])
 {
     if (argc == 1) {
-    	std::cout << "usage: offline [OPTION] FILE.pat\n";
+    	std::cout << "usage: offline [OPTION] FILE.pex\n";
     	std::cout << "  --ss         force use of spatial sorting\n";
     	std::cout << "  --kd         force use of k-d tree\n";
     	std::cout << '\n';
-    	exit(1);
+    	PAUSE_AND_EXIT;
     }
     argv++; argc--;
 
@@ -35,12 +35,14 @@ int main(int argc, char *argv[])
     	}
     	else {
     		std::cout << "unknown option '" << *argv << "'\n";
-    		exit(1);
+    		PAUSE_AND_EXIT;
     	}
     	argv++; argc--;
     }
 
     //clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_start);
+
+    simulation_use_seed(1); // default to use when not explicitly set
 
 	parser_init(*argv);
 	parser_load_pattern();
@@ -58,8 +60,10 @@ int main(int argc, char *argv[])
 
 	int it = (simulation.stop_at != -1) ? simulation.stop_at : 10000;
 	simulation_run(it);
-	//export_texture(256);
-	//std::cout << "stop at " << it << "  " << simulation.iteration << '\n';
+	std::cout << '\n';
+    std::cout << "ended after " << simulation.iteration << " iterations\n";
+	export_vector(0);
+	std::cout << "vector output saved with " << simulation.n_cells << " cells\n";
 
 	simulation_done();
 

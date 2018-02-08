@@ -40,6 +40,7 @@ void simulation_add_rule(const Rule& rule);
 
 void simulation_init(NNSChoice nns_choice = AUTO, bool detect_stability = false);
 void simulation_run(int steps);
+void simulation_reset();
 void simulation_done();
 
 /*-------------------------------- EXPORTED VARIABLES --------------------------------*/

@@ -1,4 +1,4 @@
-// dalmatian-liks spots
+// dalmatian-like spots
 
 define chemical P limit 1
 
@@ -20,4 +20,3 @@ colormap slot 00 use color "white"
 colormap slot 99 use color "black"
 
 stop at 2000
-

@@ -127,7 +127,7 @@ CellId *NNS_KD_Tree::query_position_range(int index, float r)
 	// Find all the neighbors to query_point[0:dim-1] within a maximum radius.
 	// The output is given as a vector of pairs, of which the first element is a point index and the
 	// second the corresponding distance. Previous contents of 'ret_matches' are cleared.
-	const int n = ((KDTree*) kd_tree)->radiusSearch(&query_pt[0], r * r, ret_matches, params);
+	int n = (int) ((KDTree*) kd_tree)->radiusSearch(&query_pt[0], r * r, ret_matches, params);
 
 	int j = 0;
 	for (int i = 0; i < n; i++) {
@@ -135,40 +135,10 @@ CellId *NNS_KD_Tree::query_position_range(int index, float r)
 		if ((int) ret_matches[i].first != index) {
 			// NOTE: this works now because index matches CellId; in the general case we would need
 			// neighbors[i] = positions[ret_matches[i].first].cell_id;
-			neighbors[j++] = ret_matches[i].first;
+			neighbors[j++] = (int) ret_matches[i].first;
 		}
 	}
 	neighbors[j] = -1;
 
 	return neighbors;
 }
-
-#ifdef FUTURE
-
-//size_t nanoflann::KDTreeSingleIndexAdaptor< Distance, DatasetAdaptor, DIM, IndexType >::usedMemory	(		)	const
-//inline
-//Computes the index memory usage Returns: memory used by the index
-
-void query_nanoflann(int k)
-{
-	float query_pt[2];
-	std::vector<size_t> ret_index(k + 1);
-	std::vector<float> out_dist_sqr(k + 1);
-
-	// ----------------------------------------------------------------
-	// knnSearch():  Perform a search for the N closest points
-	// ----------------------------------------------------------------
-	for (int i = 0; i < position_counter; i++) {
-		query_pt[0] = position_matrix[i].x;
-		query_pt[1] = position_matrix[i].y;
-		nano_tree->knnSearch(&query_pt[0], k + 1, &ret_index[0], &out_dist_sqr[0]);
-
-		for (int j = 0; j < k; j++) {
-			nearest_trial[i * k + j] = out_dist_sqr[j + 1]; // store squared distance of nearest point
-		}
-
-	}
-
-}
-
-#endif

@@ -1,7 +1,10 @@
 # pattern-explorer
-Reference implementation and experiments for the model described on the paper *Pattern formation through minimalist biologically inspired cellular simulation*, presented at the Graphics Interface 2017 conference.
 
-There is a simple Makefile, that needs to be updated before compiling.
+Reference implementation and experiments for the model described on the paper _Pattern formation through minimalist biologically inspired cellular simulation_, presented at the Graphics Interface 2017 conference.
+
+The full paper, supplementary material and respective experiment files are in the [paper](https://github.com/mgmalheiros/pattern-explorer/tree/master/paper) folder.
+
+There is a simple Makefile, that needs to be updated before compiling. Visual Studio project files are in the **misc** folder.
 
 There are three executables:
 
@@ -9,30 +12,37 @@ There are three executables:
   * **offline**: command-line only version, made for benchmarking purposes
   * **simple**: simple example of defining the initial state and running the simulation through the API (does not parse experiment files)
 
-Dependencies:
+Required dependencies:
 
   * [AntTweakBar](http://anttweakbar.sourceforge.net/), for the user interface
-  * [CGAL](http://www.cgal.org/), for the natural neighbor coordinate computation, which produces high-quality output textures
-  * [GLUT](http://freeglut.sourceforge.net/), as simple platform-independent windowing system for OpenGL
-  * [LibPNG](http://www.libpng.org/), for PNG output support
   * [GLM](http://glm.g-truc.net/), for utility mathematical functions
+  * [GLUT](http://freeglut.sourceforge.net/), as simple platform-independent windowing system for OpenGL
 
-Key bindings for GUI program:
+Optional dependencies (must be enabled in the Makefile):
+
+  * [LibPNG](http://www.libpng.org/), for screenshot support
+  * [CGAL](http://www.cgal.org/), for the natural neighbor coordinate computation, which produces high-quality output textures (needs also LibPNG)
+
+Key bindings for the GUI program:
 
   * **space** - run a single iteration
   * **tab** - run at most 50 iterations
   * **esc** - quit
-  * **A** - change shown chemical
-  * **B** - show/hide information bar
-  * **C** - center pattern in view
-  * **D** - show/hide domain limits
-  * **L** - reload colormap definitions
-  * **M** - change colormap type
-  * **N** - show/hide nearest neighbors for current cell (picked a right-click)
-  * **O** - output a screenshot
-  * **P** - show/hide polarity vectors
-  * **S** - start/stop simulation
-  * **T** - outupt high-quality interpolated texture
-  * **X** - change cell exhibition type
+  * **a** - change shown chemical
+  * **b** - show/hide information bar
+  * **c** - center pattern in view
+  * **d** - show/hide domain limits
+  * **i** - show/hide mirror pairs (defined in shape files)
+  * **l** - reload colormap definitions
+  * **m** - change colormap type
+  * **n** - show/hide nearest neighbors for current cell (picked by left-click)
+  * **o** - output a screenshot
+  * **p** - show/hide polarity vectors
+  * **r** - reload experiment file
+  * **s** - start/stop simulation
+  * **t** - output high-quality interpolated texture
+  * **x** - change cell exhibition type (octogon, square, inscribed hexagon, circumscribed hexagon and circle)
 
-It has been only tested on Linux, but should be fairly simple to port to Mac OS or Windows.
+The source code has been tested on Linux and Windows, and should be fairly simple to port to other platforms.
+
+A [precompiled binary](https://github.com/mgmalheiros/pattern-explorer/releases) is also available for Windows, in 32 and 64-bit versions, able to run on Windows 7 and later.
