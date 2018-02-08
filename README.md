@@ -4,26 +4,17 @@ Reference implementation and experiments for the model described on the paper _P
 
 The full paper, supplementary material and respective experiment files are in the [paper](https://github.com/mgmalheiros/pattern-explorer/tree/master/paper) folder.
 
-There is a simple Makefile, that needs to be updated before compiling. Visual Studio project files are in the **misc** folder.
+![](misc/mosaic.jpg)
 
-There are three executables:
+## Download
 
-  * **pattern**: GUI program, with all features
-  * **offline**: command-line only version, made for benchmarking purposes
-  * **simple**: simple example of defining the initial state and running the simulation through the API (does not parse experiment files)
+The source code can be compiled on Linux and Windows, and should be fairly simple to port to other platforms.
 
-Required dependencies:
+A [precompiled binary](https://github.com/mgmalheiros/pattern-explorer/releases) is also available for Windows, in 32 and 64-bit versions, being able to run on Windows 7 and later.
 
-  * [AntTweakBar](http://anttweakbar.sourceforge.net/), for the user interface
-  * [GLM](http://glm.g-truc.net/), for utility mathematical functions
-  * [GLUT](http://freeglut.sourceforge.net/), as simple platform-independent windowing system for OpenGL
+## Usage
 
-Optional dependencies (must be enabled in the Makefile):
-
-  * [LibPNG](http://www.libpng.org/), for screenshot support
-  * [CGAL](http://www.cgal.org/), for the natural neighbor coordinate computation, which produces high-quality output textures (needs also LibPNG)
-
-Key bindings for the GUI program:
+Key bindings for the **pattern** program:
 
   * **space** - run a single iteration
   * **tab** - run at most 50 iterations
@@ -43,6 +34,23 @@ Key bindings for the GUI program:
   * **t** - output high-quality interpolated texture
   * **x** - change cell exhibition type (octogon, square, inscribed hexagon, circumscribed hexagon and circle)
 
-The source code has been tested on Linux and Windows, and should be fairly simple to port to other platforms.
+## Compiling
 
-A [precompiled binary](https://github.com/mgmalheiros/pattern-explorer/releases) is also available for Windows, in 32 and 64-bit versions, able to run on Windows 7 and later.
+There is a simple Makefile, which needs to be updated before compiling. Visual Studio project files are in the **misc** folder.
+
+There are three executables available:
+
+  * **pattern**: GUI program, with all features
+  * **offline**: command-line only version, made for benchmarking purposes
+  * **simple**: simple example of defining the initial state and running the simulation through the API (does not parse experiment files)
+
+Required dependencies:
+
+  * [AntTweakBar](http://anttweakbar.sourceforge.net/), for the user interface
+  * [GLM](http://glm.g-truc.net/), for utility mathematical functions
+  * [GLUT](http://freeglut.sourceforge.net/), as simple platform-independent windowing system for OpenGL
+
+Optional dependencies (must be explicitly enabled in the Makefile):
+
+  * [LibPNG](http://www.libpng.org/), for screenshot support
+  * [CGAL](http://www.cgal.org/), for the natural neighbor coordinate computation, which produces high-quality output textures (needs also LibPNG)
