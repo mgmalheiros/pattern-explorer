@@ -1,4 +1,4 @@
-// a negative diffusion will produce more reagent in some circustances
+// a negative diffusion will produce more reagent in some circumstances
 // the chemical will be pushed onto higher concentration areas, even
 // after the concentration at membrane drops to zero
 

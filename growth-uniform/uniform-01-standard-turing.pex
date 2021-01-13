@@ -1,5 +1,5 @@
 // standard turing pattern + growth
-// -> the pattern adapts and maintains its wavelenght 
+// -> the pattern adapts and maintains its wavelength 
 
 define division_limit 6
 
